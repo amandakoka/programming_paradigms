@@ -3,7 +3,7 @@
 Weekly games in each language. 
 
 1. Python - Imperative, **Procedural**, OO
-2. C - Imperative, Procedura
+2. C - Imperative, Procedural
 3. Go - Imperative, Procedural, Functional
 4. Haskel - Functional
 5. C++ - Imperative, Procedural, OO
