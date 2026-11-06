@@ -1,0 +1,136 @@
+# Simplified Go Game
+# Language - Python
+# Paradigm - Procedural
+
+# variable gris size feature and check
+while True:
+    board_choice = input("Choose to play with a 9 or 13 board: ")
+    
+    if board_choice == "9" or board_choice == "13":
+        size = int(board_choice)
+        break
+    
+    print("Board can only be 9 or 13.")
+    
+board = []
+
+for row in range(size):
+    board.append(["-"] * size)
+
+def display_board():
+    for row in board:
+        for position in row:
+            print(position, end="")
+        print()
+
+def take_turn(player):
+    
+    while True: 
+        try:
+            row = int(input("Enter row: ")) - 1
+            col = int(input("Enter column: ")) - 1
+        except ValueError:
+            print("Please enter whole numbers.")
+            continue
+        
+        if row < 0 or row >= size or col < 0 or col >= size:
+            print("That pos is outside the board")
+        elif board[row][col] != "-":
+            print("A player has already occupied here, try again")
+        else:
+            board[row][col] = player
+            break
+# extra feature removing a row 
+def remove_row():
+    while True:
+        try:
+            row = int(input("Enter the row you want to get rid of: ")) - 1
+        except ValueError:
+            print("Please enter a whole number.")
+            continue
+        
+        if row < 0 or row >= size:
+            print("The rows outside the board size")
+        elif "b" not in board[row] and "w" not in board[row]:
+            print("That row is already empty.")
+        else: 
+            for col in range(size):
+                board[row][col] = "-"
+            break
+
+def calc_territory(player):
+    score = 0
+
+    for row in range(1, size - 1):
+        for col in range(1, size - 1):
+            if board[row][col] == "-":
+                if (board[row - 1][col] == player and
+                    board[row + 1][col] == player and
+                    board[row][col - 1] == player and
+                    board[row][col + 1] == player):
+                    score += 1
+    return score
+            
+
+def game_loop():
+    # black player always goes first
+    # need to set display choices while both havent passed
+    player = "b"
+    passes = 0
+    row_removed = {"b": False, "w": False}
+    
+    while passes < 2:
+        display_board()
+        print ("It's player " + player + "'s turn")
+        print ("1. Place a stone")
+        print ("2. Pass on your turn")
+        print("3. Remove a row")
+        
+        choice = input("Choose 1, 2 or 3: ")
+        
+        if choice == "1":
+            take_turn(player)
+            passes = 0
+        elif choice == "2":
+            passes += 1
+            print("Player " + player + " passed.")
+        elif choice == "3":
+            if row_removed[player]:
+                print("You already used your row removal.")
+                continue
+            remove_row()
+            row_removed[player] = True
+            passes = 0
+        else:
+            print("Invalid option")
+            continue
+        
+        black_score = calc_territory("b")
+        white_score = calc_territory("w")
+
+        print("Black territory:", black_score)
+        print("White territory:", white_score)
+        
+        if player == "b":
+            player = "w"
+        else:
+            player = "b"
+        
+    display_board()
+    print("Both players passed. Game over.")
+    
+    print("Final Black territory:", black_score)
+    print("Final White territory:", white_score)
+
+    if black_score > white_score:
+        print("Black wins!")
+    elif white_score > black_score:
+        print("White wins!")
+    else:
+        print("It's a draw!")
+    
+def main():
+    game_loop()
+
+if __name__ == "__main__":
+    main()
