@@ -1,0 +1,320 @@
+// Simplified Go Game
+// Language - C
+// Paradigm - Procedural
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_SIZE 13
+
+// Python: board is a list of lists.
+// C: board is a 2D array of characters with space for the largest board.
+char board[MAX_SIZE][MAX_SIZE];
+int size;
+
+
+// Python uses input(), int() and try/except.
+// This helper reads a line and checks that it contains a whole number.
+// Returns 1 if valid, or 0 if invalid.
+int read_number(const char *prompt, int *number) {
+    char input[100];
+    char extra;
+
+    printf("%s", prompt);
+
+    if (fgets(input, sizeof(input), stdin) == NULL) {
+        // Stop if the input stream closes.
+        printf("\nInput ended.\n");
+        exit(0);
+    }
+
+    // Reject an input line that is too long and clear the rest.
+    if (strchr(input, '\n') == NULL && !feof(stdin)) {
+        int character;
+
+        while ((character = getchar()) != '\n' && character != EOF) {
+        }
+
+        return 0;
+    }
+
+    // %d reads an integer.
+    // The extra %c checks for unwanted characters, such as "3abc".
+    // A valid integer alone gives one successful conversion.
+    return sscanf(input, "%d %c", number, &extra) == 1;
+}
+
+
+// Python:
+// for row in range(size):
+//     board.append(["-"] * size)
+//
+// C uses nested loops to fill the existing array.
+void initialise_board(void) {
+    for (int row = 0; row < size; row++) {
+        for (int col = 0; col < size; col++) {
+            // Single quotes represent one character in C.
+            board[row][col] = '-';
+        }
+    }
+}
+
+
+// Python: print(position, end=""), then print() after each row.
+void display_board(void) {
+    for (int row = 0; row < size; row++) {
+        for (int col = 0; col < size; col++) {
+            // %c prints one character.
+            printf("%c", board[row][col]);
+        }
+
+        // Equivalent to Python's print() for a new line.
+        printf("\n");
+    }
+}
+
+
+// Python: def take_turn(player):
+// C declares the parameter type: char player.
+// void means this function does not return a value.
+void take_turn(char player) {
+    int row;
+    int col;
+
+    // Python: while True:
+    // In C, 1 means true.
+    while (1) {
+        // &row gives the helper the address of row,
+        // allowing it to store the entered number there.
+        if (!read_number("Enter row: ", &row)) {
+            printf("Please enter whole numbers.\n");
+            continue;
+        }
+
+        if (!read_number("Enter column: ", &col)) {
+            printf("Please enter whole numbers.\n");
+            continue;
+        }
+
+        // Python: int(input(...)) - 1
+        // Players count from 1; array indexes count from 0.
+        row--;
+        col--;
+
+        // Python's "or" becomes || in C.
+        if (row < 0 || row >= size || col < 0 || col >= size) {
+            printf("That position is outside the board.\n");
+        }
+        // Python's "elif" becomes "else if".
+        else if (board[row][col] != '-') {
+            printf("A player has already occupied here, try again.\n");
+        }
+        else {
+            // Same idea as Python: change the shared board directly.
+            board[row][col] = player;
+            break;
+        }
+    }
+}
+
+
+// Extra feature: clear a non-empty row.
+void remove_row(void) {
+    int row;
+
+    while (1) {
+        if (!read_number(
+                "Enter the row you want to get rid of: ", &row)) {
+            printf("Please enter a whole number.\n");
+            continue;
+        }
+
+        row--;
+
+        if (row < 0 || row >= size) {
+            printf("That row is outside the board size.\n");
+            continue;
+        }
+
+        // Python checks:
+        // "b" not in board[row] and "w" not in board[row]
+        //
+        // C searches the row manually.
+        // 0 means false; 1 means true.
+        int has_stone = 0;
+
+        for (int col = 0; col < size; col++) {
+            if (board[row][col] == 'b' || board[row][col] == 'w') {
+                has_stone = 1;
+                break;
+            }
+        }
+
+        // ! means "not", so this means "if no stone was found".
+        if (!has_stone) {
+            printf("That row is already empty.\n");
+        }
+        else {
+            // Same as your Python loop: replace every position with '-'.
+            for (int col = 0; col < size; col++) {
+                board[row][col] = '-';
+            }
+
+            break;
+        }
+    }
+}
+
+
+// Python: def calc_territory(player):
+// C uses int because this function returns an integer score.
+int calc_territory(char player) {
+    int score = 0;
+
+    // Python: range(1, size - 1)
+    // Skip edges because they do not have all four neighbours.
+    for (int row = 1; row < size - 1; row++) {
+        for (int col = 1; col < size - 1; col++) {
+            if (board[row][col] == '-') {
+                // Python's "and" becomes && in C.
+                if (board[row - 1][col] == player &&
+                    board[row + 1][col] == player &&
+                    board[row][col - 1] == player &&
+                    board[row][col + 1] == player) {
+
+                    // Python: score += 1
+                    score++;
+                }
+            }
+        }
+    }
+
+    return score;
+}
+
+
+void game_loop(void) {
+    // Python: player = "b"
+    // C uses char for a single character.
+    char player = 'b';
+    int passes = 0;
+
+    // Python: row_removed = {"b": False, "w": False}
+    // C uses an array: index 0 for black, index 1 for white.
+    // 0 = unused, 1 = used.
+    int row_removed[2] = {0, 0};
+
+    int black_score = 0;
+    int white_score = 0;
+
+    while (passes < 2) {
+        display_board();
+
+        // Python joins strings; printf uses a placeholder.
+        printf("It's player %c's turn\n", player);
+        printf("1. Place a stone\n");
+        printf("2. Pass on your turn\n");
+        printf("3. Remove a row\n");
+
+        int choice;
+
+        if (!read_number("Choose 1, 2 or 3: ", &choice)) {
+            printf("Invalid option.\n");
+            continue;
+        }
+
+        // Find the array index for the current player.
+        int player_index;
+
+        if (player == 'b') {
+            player_index = 0;
+        }
+        else {
+            player_index = 1;
+        }
+
+        // Unlike input() in Python, our helper gives us an integer,
+        // so compare with 1 rather than "1".
+        if (choice == 1) {
+            take_turn(player);
+            passes = 0;
+        }
+        else if (choice == 2) {
+            passes++;
+            printf("Player %c passed.\n", player);
+        }
+        else if (choice == 3) {
+            // Python: if row_removed[player]:
+            if (row_removed[player_index]) {
+                printf("You already used your row removal.\n");
+
+                // As in Python, continue skips the rest of this turn.
+                // The same player gets to choose again.
+                continue;
+            }
+
+            remove_row();
+            row_removed[player_index] = 1;
+            passes = 0;
+        }
+        else {
+            printf("Invalid option.\n");
+            continue;
+        }
+
+        black_score = calc_territory('b');
+        white_score = calc_territory('w');
+
+        // %d prints an integer.
+        printf("Black territory: %d\n", black_score);
+        printf("White territory: %d\n", white_score);
+
+        // Same player-switching logic as your Python.
+        if (player == 'b') {
+            player = 'w';
+        }
+        else {
+            player = 'b';
+        }
+    }
+
+    display_board();
+    printf("Both players passed. Game over.\n");
+
+    printf("Final Black territory: %d\n", black_score);
+    printf("Final White territory: %d\n", white_score);
+
+    if (black_score > white_score) {
+        printf("Black wins!\n");
+    }
+    else if (white_score > black_score) {
+        printf("White wins!\n");
+    }
+    else {
+        printf("It's a draw!\n");
+    }
+}
+
+
+// C automatically starts execution in main().
+// No Python-style if __name__ == "__main__": is needed.
+int main(void) {
+    // Python chooses the size before calling game_loop().
+    // Here, that setup happens inside main().
+    while (1) {
+        if (read_number("Choose to play with a 9 or 13 board: ", &size)) {
+            if (size == 9 || size == 13) {
+                break;
+            }
+        }
+
+        printf("Board can only be 9 or 13.\n");
+    }
+
+    initialise_board();
+    game_loop();
+
+    // Tell the operating system that the program finished successfully.
+    return 0;
+}
