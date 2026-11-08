@@ -1,0 +1,184 @@
+package main
+
+import "fmt"
+
+func createBoard(size int) [][]string {
+    board := make([][]string, size)
+    for row := 0; row < size; row++ {
+        board[row] = make([]string, size)
+
+        for col := 0; col < size; col++ {
+            board[row][col] = "-"
+        }
+    }
+    return board
+}
+func displayBoard(board [][]string) {
+    for row := 0; row < len(board); row++ {
+        for col := 0; col < len(board[row]); col++ {
+            fmt.Print(board[row][col], " ")
+        }
+        fmt.Println()
+    }
+}
+
+func takeTurn(board [][]string, player string) {
+    for {
+        var row int
+        var col int
+        
+        fmt.Print("Enter row: ")
+        fmt.Scan(&row)
+        row--
+        
+        fmt.Print("Enter column: ")
+        fmt.Scan(&col)
+        col--
+        
+        if row < 0 || row >= len(board) || col < 0 || col >= len(board) {
+            fmt.Println("That pos is outside the board.")
+        } else if board[row][col] != "-" {
+            fmt.Println("A player has already occupied here, try again")
+        } else {
+            board[row][col] = player
+            break
+        }
+    }
+}
+
+func removeRow(board [][]string) {
+    for {
+        var row int
+        fmt.Print("Enter the row you want to clear: ")
+        fmt.Scan(&row)
+        row--
+
+        if row < 0 || row >= len(board) {
+            fmt.Println("That row is outside the board.")
+        } else {
+            hasStone := false
+            for col := 0; col < len(board[row]); col++ {
+                if board[row][col] != "-" {
+                    hasStone = true
+                    break
+                }
+            }
+            if !hasStone {
+                fmt.Println("That row is already empty.")
+            } else {
+                for col := 0; col < len(board[row]); col++ {
+                    board[row][col] = "-"
+                }
+                break
+            }
+        }
+    }
+}
+
+func calcTerritory(board [][]string, player string) int {
+    score := 0
+
+    for row := 1; row < len(board)-1; row++ {
+        for col := 1; col < len(board[row])-1; col++ {
+            if board[row][col] == "-" {
+                if board[row-1][col] == player &&
+                    board[row+1][col] == player &&
+                    board[row][col-1] == player &&
+                    board[row][col+1] == player {
+                    score++
+                }
+            }
+        }
+    }
+    return score
+}
+
+func gameLoop(board [][]string) {
+    player := "b"
+    passes := 0
+    rowRemoved := map[string]bool{"b": false, "w": false}
+    blackScore := 0
+    whiteScore := 0
+
+    for passes < 2 {
+        displayBoard(board)
+        fmt.Println("It's player " + player + "'s turn")
+        fmt.Println("1. Place a stone")
+        fmt.Println("2. Pass on your turn")
+        fmt.Println("3. Remove a row")
+
+        var choice string
+        fmt.Print("Choose 1, 2 or 3: ")
+        fmt.Scan(&choice)
+
+        if choice == "1" {
+            takeTurn(board, player)
+            passes = 0
+        } else if choice == "2" {
+            passes++
+            fmt.Println("Player " + player + " passed.")
+        } else if choice == "3" {
+            if rowRemoved[player] {
+                fmt.Println("You already used your row removal.")
+                continue
+            }
+
+            removeRow(board)
+            rowRemoved[player] = true
+            passes = 0
+        } else {
+            fmt.Println("Invalid option")
+            continue
+        }
+
+        blackScore = calcTerritory(board, "b")
+        whiteScore = calcTerritory(board, "w")
+
+        fmt.Println("Black territory:", blackScore)
+        fmt.Println("White territory:", whiteScore)
+
+        if player == "b" {
+            player = "w"
+        } else {
+            player = "b"
+        }
+    }
+
+    displayBoard(board)
+    fmt.Println("Both players passed. Game over.")
+    fmt.Println("Final Black territory:", blackScore)
+    fmt.Println("Final White territory:", whiteScore)
+
+    if blackScore > whiteScore {
+        fmt.Println("Black wins!")
+    } else if whiteScore > blackScore {
+        fmt.Println("White wins!")
+    } else {
+        fmt.Println("It's a draw!")
+    }
+}
+
+func main() {
+    var size int 
+    // translate to while loop in python in go using a for
+    for {
+        fmt.Println("Choose to play with a 9 or 13 board: ")
+        var boardChoice string
+        fmt.Scan(&boardChoice)
+        
+        if boardChoice == "9" || boardChoice == "13" {
+            if boardChoice == "9" {
+                size = 9
+            } else {
+                size = 13
+            }
+            break
+        }
+        fmt.Println("Board can only be 9 or 13.")
+    }
+    fmt.Println("Chosen board size: ", size)
+    
+    board := createBoard(size)
+    gameLoop(board)
+    
+}
